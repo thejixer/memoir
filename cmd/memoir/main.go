@@ -1,7 +1,23 @@
 package main
 
-import "fmt"
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/thejixer/memoir/internal/handlers"
+	server "github.com/thejixer/memoir/internal/server"
+)
+
+func init() {
+	godotenv.Load()
+}
 
 func main() {
-	fmt.Println("hello world")
+
+	listenAddr := os.Getenv("LISTEN_ADDR")
+
+	handlerService := handlers.NewHandlerService()
+
+	server := server.NewAPIServer(listenAddr, handlerService)
+	server.Run()
 }
