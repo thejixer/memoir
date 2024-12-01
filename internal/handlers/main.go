@@ -4,13 +4,17 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/thejixer/memoir/internal/database"
 )
 
 type HandlerService struct {
+	dbStore *database.PostgresStore
 }
 
-func NewHandlerService() *HandlerService {
-	return &HandlerService{}
+func NewHandlerService(dbStore *database.PostgresStore) *HandlerService {
+	return &HandlerService{
+		dbStore: dbStore,
+	}
 }
 
 func (h *HandlerService) HandleHelloWorld(c echo.Context) error {

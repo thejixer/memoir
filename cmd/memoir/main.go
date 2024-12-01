@@ -1,11 +1,13 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/thejixer/memoir/internal/database"
 	"github.com/thejixer/memoir/internal/handlers"
-	server "github.com/thejixer/memoir/internal/server"
+	"github.com/thejixer/memoir/internal/server"
 )
 
 func init() {
@@ -15,9 +17,18 @@ func init() {
 func main() {
 
 	listenAddr := os.Getenv("LISTEN_ADDR")
+	dbStore, err := database.NewPostgresStore()
 
-	handlerService := handlers.NewHandlerService()
+	if err != nil {
+		log.Fatal("could not connect to the database: ", err)
+	}
 
-	server := server.NewAPIServer(listenAddr, handlerService)
-	server.Run()
+	if err := dbStore.Init(); err != nil {
+		log.Fatal("could not connect to the database: ", err)
+	}
+
+	handlerService := handlers.NewHandlerService(dbStore)
+
+	s := server.NewAPIServer(listenAddr, handlerService)
+	s.Run()
 }
