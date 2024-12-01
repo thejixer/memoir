@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/thejixer/memoir/internal/database"
 	"github.com/thejixer/memoir/internal/handlers"
+	"github.com/thejixer/memoir/internal/redis"
 	"github.com/thejixer/memoir/internal/server"
 )
 
@@ -26,8 +28,13 @@ func main() {
 	if err := dbStore.Init(); err != nil {
 		log.Fatal("could not connect to the database: ", err)
 	}
+	fmt.Println("Attempting to create a new redis store")
+	redisStore, err := redis.NewRedisStore()
+	if err != nil {
+		log.Fatal("could not connect to the redis: ", err)
+	}
 
-	handlerService := handlers.NewHandlerService(dbStore)
+	handlerService := handlers.NewHandlerService(dbStore, redisStore)
 
 	s := server.NewAPIServer(listenAddr, handlerService)
 	s.Run()

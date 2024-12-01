@@ -5,15 +5,21 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/thejixer/memoir/internal/database"
+	"github.com/thejixer/memoir/internal/redis"
 )
 
 type HandlerService struct {
-	dbStore *database.PostgresStore
+	dbStore    *database.PostgresStore
+	redisStore *redis.RedisStore
 }
 
-func NewHandlerService(dbStore *database.PostgresStore) *HandlerService {
+func NewHandlerService(
+	dbStore *database.PostgresStore,
+	redisStore *redis.RedisStore,
+) *HandlerService {
 	return &HandlerService{
-		dbStore: dbStore,
+		dbStore:    dbStore,
+		redisStore: redisStore,
 	}
 }
 

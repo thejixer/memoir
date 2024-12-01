@@ -6,10 +6,12 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/thejixer/memoir/internal/models"
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db       *sql.DB
+	UserRepo models.UserRepository
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
@@ -29,12 +31,19 @@ func NewPostgresStore() (*PostgresStore, error) {
 		return nil, err
 	}
 
+	userRepo := NewUserRepo(db)
+
 	return &PostgresStore{
-		db: db,
+		db:       db,
+		UserRepo: userRepo,
 	}, nil
 }
 
 func (s *PostgresStore) Init() error {
+
+	if err := s.createUserTable(); err != nil {
+		return err
+	}
 
 	return nil
 
