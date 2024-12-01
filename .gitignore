@@ -1,0 +1,4 @@
+.env
+/cmd/bin
+.air.toml
+todo
