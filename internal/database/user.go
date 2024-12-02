@@ -98,6 +98,21 @@ func (r *UserRepo) FindByEmail(email string) (*models.User, error) {
 	return nil, errors.New("not found")
 }
 
+func (r *UserRepo) VerifyEmail(email string) error {
+	query := `
+		UPDATE USERS
+		SET isEmailVerified = $2
+		WHERE email = LOWER($1);
+	`
+	_, err := r.db.Exec(query, email, true)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ScanIntoUsers(rows *sql.Rows) (*models.User, error) {
 	u := new(models.User)
 	if err := rows.Scan(

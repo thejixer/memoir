@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/thejixer/memoir/internal/models"
+	"github.com/thejixer/memoir/internal/utils"
 )
 
 func (h *HandlerService) HandleSignup(c echo.Context) error {
@@ -75,4 +76,36 @@ func (h *HandlerService) HandleRequestVerificationEmail(c echo.Context) error {
 	// email the code to the user's email
 
 	return WriteReponse(c, http.StatusOK, "please check your email to verify your email")
+}
+
+func (h *HandlerService) HandleEmailVerification(c echo.Context) error {
+	email := c.QueryParam("email")
+	verificationCode := c.QueryParam("code")
+
+	if email == "" || verificationCode == "" {
+		return WriteReponse(c, http.StatusBadRequest, "insufficient data")
+	}
+
+	thisUser, err := h.dbStore.UserRepo.FindByEmail(email)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "user not found")
+	}
+
+	if val, err := h.redisStore.GetEmailVerificationCode(thisUser.Email); err != nil || val != verificationCode {
+		return WriteReponse(c, http.StatusBadRequest, "code doesnt match")
+	}
+
+	updateErr := h.dbStore.UserRepo.VerifyEmail(email)
+	h.redisStore.DeleteEmailVerificationCode(email)
+	if updateErr != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+
+	tokenString, err := utils.SignToken(thisUser.ID)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, models.TokenDTO{Token: tokenString})
 }

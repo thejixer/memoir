@@ -6,6 +6,7 @@ type UserRepository interface {
 	Create(name, email, password string, isEmailVerified bool) (*User, error)
 	FindById(id int) (*User, error)
 	FindByEmail(email string) (*User, error)
+	VerifyEmail(email string) error
 }
 
 type User struct {
