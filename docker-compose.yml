@@ -15,3 +15,11 @@ services:
     restart: always
     ports:
       - '6379:6379'
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: jixer@jixer.com
+      PGADMIN_DEFAULT_PASSWORD: 1234
