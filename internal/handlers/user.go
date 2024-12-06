@@ -1,13 +1,20 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	dataprocesslayer "github.com/thejixer/memoir/internal/data-process-layer"
 	"github.com/thejixer/memoir/internal/models"
 	"github.com/thejixer/memoir/internal/utils"
 	"github.com/thejixer/memoir/pkg/encryption"
 )
+
+type CustomContext struct {
+	echo.Context
+	User *models.User
+}
 
 func (h *HandlerService) HandleSignup(c echo.Context) error {
 
@@ -142,4 +149,24 @@ func (h *HandlerService) HandleLogin(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, models.TokenDTO{Token: tokenString})
 
+}
+
+func GetMe(c *echo.Context) (*models.User, error) {
+	me := (*c).(CustomContext).User
+	if me == nil {
+		return nil, errors.New("unathorized")
+	}
+	return me, nil
+}
+
+func (h *HandlerService) HandleMe(c echo.Context) error {
+
+	me, err := GetMe(&c)
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "unathorized")
+	}
+
+	user := dataprocesslayer.ConvertToUserDto(me)
+
+	return c.JSON(http.StatusOK, user)
 }
