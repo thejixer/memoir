@@ -33,3 +33,8 @@ type ChangePasswordDTO struct {
 	Password string `json:"password"`
 	Code     string `json:"code"`
 }
+
+type CreatePersonDto struct {
+	Name   string `json:"name" validate:"required"`
+	Avatar string `json:"avatar"`
+}

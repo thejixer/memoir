@@ -26,7 +26,6 @@ func (rc *RedisStore) CacheUser(u *models.User) error {
 }
 
 func (rc *RedisStore) GetUser(id int) *models.User {
-	fmt.Printf("reading user with id %v from redis \n", id)
 
 	key := fmt.Sprintf("u-%v", id)
 	val, err := rc.rdb.Get(rc.ctx, key).Result()

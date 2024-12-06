@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -18,7 +17,6 @@ func NewRedisStore() (*RedisStore, error) {
 
 	Addr := os.Getenv("REDIS_URI")
 
-	fmt.Printf("Addr is : %v \n ", Addr)
 	rdb := redis.NewClient(&redis.Options{
 		Addr: Addr,
 	})
