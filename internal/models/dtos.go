@@ -18,3 +18,8 @@ type RequestVerificationEmailDTO struct {
 type TokenDTO struct {
 	Token string `json:"token"`
 }
+
+type LoginDTO struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}

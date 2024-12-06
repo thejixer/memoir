@@ -7,4 +7,5 @@ func (s *APIServer) ApplyAuthRoutes(e *echo.Echo) {
 	auth.POST("/signup", s.handlerService.HandleSignup)
 	auth.POST("/request-verificationCode", s.handlerService.HandleRequestVerificationEmail)
 	auth.GET("/verify-email", s.handlerService.HandleEmailVerification)
+	auth.POST("/login", s.handlerService.HandleLogin)
 }

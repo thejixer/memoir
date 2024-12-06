@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/thejixer/memoir/internal/models"
 	"github.com/thejixer/memoir/internal/utils"
+	"github.com/thejixer/memoir/pkg/encryption"
 )
 
 func (h *HandlerService) HandleSignup(c echo.Context) error {
@@ -108,4 +109,37 @@ func (h *HandlerService) HandleEmailVerification(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, models.TokenDTO{Token: tokenString})
+}
+
+func (h *HandlerService) HandleLogin(c echo.Context) error {
+	body := models.LoginDTO{}
+
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(body); err != nil {
+		return WriteReponse(c, http.StatusBadRequest, "lack of data")
+	}
+
+	thisUser, err := h.dbStore.UserRepo.FindByEmail(body.Email)
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "bad requesst")
+	}
+
+	if !thisUser.IsEmailVerified {
+		return WriteReponse(c, http.StatusUnauthorized, "your email is not verified")
+	}
+
+	if match := encryption.CheckPasswordHash(body.Password, thisUser.Password); !match {
+		return WriteReponse(c, http.StatusBadRequest, "password doesnt match")
+	}
+
+	tokenString, err := utils.SignToken(thisUser.ID)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, models.TokenDTO{Token: tokenString})
+
 }
