@@ -7,6 +7,7 @@ type UserRepository interface {
 	FindById(id int) (*User, error)
 	FindByEmail(email string) (*User, error)
 	VerifyEmail(email string) error
+	UpdatePassword(email, password string) error
 }
 
 type User struct {

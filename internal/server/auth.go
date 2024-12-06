@@ -9,5 +9,7 @@ func (s *APIServer) ApplyAuthRoutes(e *echo.Echo) {
 	auth.GET("/verify-email", s.handlerService.HandleEmailVerification)
 	auth.POST("/login", s.handlerService.HandleLogin)
 	auth.POST("/me", s.handlerService.HandleMe, s.handlerService.Gaurd)
-
+	auth.POST("/request-change-password", s.handlerService.HandleRequestChangePassword)
+	auth.GET("/verify-changepassword-request", s.handlerService.HandleVerifyChangePasswordRequest)
+	auth.POST("/change-password", s.handlerService.HandleChangePassword)
 }

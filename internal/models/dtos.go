@@ -23,3 +23,13 @@ type LoginDTO struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
+
+type RequestChangePasswordDTO struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type ChangePasswordDTO struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password"`
+	Code     string `json:"code"`
+}

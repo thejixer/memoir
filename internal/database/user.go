@@ -113,6 +113,26 @@ func (r *UserRepo) VerifyEmail(email string) error {
 	return nil
 }
 
+func (r *UserRepo) UpdatePassword(email, password string) error {
+	hashedPassword, err := encryption.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE USERS
+		SET password = $2
+		WHERE email = LOWER($1);
+	`
+	_, updateErr := r.db.Exec(query, email, hashedPassword)
+
+	if updateErr != nil {
+		return updateErr
+	}
+
+	return nil
+}
+
 func ScanIntoUsers(rows *sql.Rows) (*models.User, error) {
 	u := new(models.User)
 	if err := rows.Scan(

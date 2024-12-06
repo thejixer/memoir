@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	dataprocesslayer "github.com/thejixer/memoir/internal/data-process-layer"
@@ -169,4 +171,97 @@ func (h *HandlerService) HandleMe(c echo.Context) error {
 	user := dataprocesslayer.ConvertToUserDto(me)
 
 	return c.JSON(http.StatusOK, user)
+}
+
+func (h *HandlerService) HandleRequestChangePassword(c echo.Context) error {
+	body := models.RequestChangePasswordDTO{}
+
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(body); err != nil {
+		return WriteReponse(c, http.StatusBadRequest, "please provide a valid email")
+	}
+
+	thisUser, err := h.dbStore.UserRepo.FindByEmail(body.Email)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "no user found")
+	}
+
+	if !thisUser.IsEmailVerified {
+		return WriteReponse(c, http.StatusBadRequest, "this option is for those who have validated their emails")
+	}
+
+	code := CreateUUID()
+
+	redisErr := h.redisStore.SetPasswordChangeRequest(thisUser.Email, code)
+	if redisErr != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this is on us, please try again")
+	}
+
+	// ### to do
+	// email the code
+
+	return WriteReponse(c, http.StatusOK, "check your email")
+
+}
+
+func (h *HandlerService) HandleVerifyChangePasswordRequest(c echo.Context) error {
+	email := c.QueryParam("email")
+	code := c.QueryParam("code")
+
+	if email == "" || code == "" {
+		return WriteReponse(c, http.StatusBadRequest, "insufficient data")
+	}
+
+	thisUser, err := h.dbStore.UserRepo.FindByEmail(email)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "user not found")
+	}
+
+	if val, err := h.redisStore.GetPasswordChangeRequest(thisUser.Email); err != nil || val != code {
+		return WriteReponse(c, http.StatusBadRequest, "code doesnt match")
+	}
+
+	h.redisStore.DeletePasswordChangeRequest(thisUser.Email)
+	redisErr := h.redisStore.CreatePasswordChangePermission(thisUser.Email, code)
+	if redisErr != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this is on us, please try again")
+	}
+
+	responsetext := fmt.Sprintf("you can change your password at %v/auth/change-password", os.Getenv("DOMAIN"))
+	return WriteReponse(c, http.StatusOK, responsetext)
+}
+
+func (h *HandlerService) HandleChangePassword(c echo.Context) error {
+	body := models.ChangePasswordDTO{}
+
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(body); err != nil {
+		return WriteReponse(c, http.StatusBadRequest, "please provide a valid email")
+	}
+
+	thisUser, err := h.dbStore.UserRepo.FindByEmail(body.Email)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "no user found")
+	}
+
+	if val, err := h.redisStore.GetPasswordChangePermission(thisUser.Email); err != nil || val != body.Code {
+		return WriteReponse(c, http.StatusForbidden, "access denied")
+	}
+
+	if err := h.dbStore.UserRepo.UpdatePassword(body.Email, body.Password); err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+
+	h.redisStore.DelPasswordChangePermission(body.Email)
+
+	return WriteReponse(c, http.StatusOK, "password changed successfully")
 }
