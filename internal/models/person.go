@@ -5,6 +5,7 @@ import "time"
 type PersonRepository interface {
 	Create(name, avatar string, userId int) (*Person, error)
 	QueryMyPersons(text string, userId, page, limit int) ([]*Person, int, error)
+	FindById(id int) (*Person, error)
 }
 
 type Person struct {

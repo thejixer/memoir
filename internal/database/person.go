@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
@@ -96,6 +97,18 @@ func (r *PersonRepo) QueryMyPersons(text string, userId, page, limit int) ([]*mo
 
 	return persons, count, nil
 
+}
+
+func (r *PersonRepo) FindById(id int) (*models.Person, error) {
+	rows, err := r.db.Query("SELECT * FROM PERSONS WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return ScanIntoPersons(rows)
+	}
+
+	return nil, errors.New("not found")
 }
 
 func ScanIntoPersons(rows *sql.Rows) (*models.Person, error) {

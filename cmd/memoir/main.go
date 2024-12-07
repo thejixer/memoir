@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -28,7 +27,7 @@ func main() {
 	if err := dbStore.Init(); err != nil {
 		log.Fatal("could not connect to the database: ", err)
 	}
-	fmt.Println("Attempting to create a new redis store")
+
 	redisStore, err := redis.NewRedisStore()
 	if err != nil {
 		log.Fatal("could not connect to the redis: ", err)

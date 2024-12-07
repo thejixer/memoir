@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -67,4 +68,34 @@ func (h *HandlerService) HandleQueryMyPersons(c echo.Context) error {
 	result := dataprocesslayer.ConvertToLLPersonDto(persons, count)
 	return c.JSON(http.StatusOK, result)
 
+}
+
+func (h *HandlerService) HandleGetSinglePerson(c echo.Context) error {
+
+	me, err := GetMe(&c)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "unathorized")
+	}
+
+	id := c.Param("id")
+	personId, err := strconv.Atoi(id)
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "not found")
+	}
+	person, err := h.dbStore.PersonRepo.FindById(personId)
+	if err != nil {
+		fmt.Println(err)
+		msg := err.Error()
+		if msg == "not found" {
+			return WriteReponse(c, http.StatusNotFound, "not found")
+		}
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+
+	if person.UserId != me.ID {
+		return WriteReponse(c, http.StatusForbidden, "access denied")
+	}
+
+	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToPersonDto(person))
 }
