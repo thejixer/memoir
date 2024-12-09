@@ -13,6 +13,7 @@ type PostgresStore struct {
 	db         *sql.DB
 	UserRepo   models.UserRepository
 	PersonRepo models.PersonRepository
+	TagRepo    models.TagRepository
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
@@ -34,11 +35,13 @@ func NewPostgresStore() (*PostgresStore, error) {
 
 	userRepo := NewUserRepo(db)
 	PersonRepo := NewPersonRepo(db)
+	tagRepo := NewTagRepo(db)
 
 	return &PostgresStore{
 		db:         db,
 		UserRepo:   userRepo,
 		PersonRepo: PersonRepo,
+		TagRepo:    tagRepo,
 	}, nil
 }
 
@@ -49,6 +52,10 @@ func (s *PostgresStore) Init() error {
 	}
 
 	if err := s.createPersonTable(); err != nil {
+		return err
+	}
+
+	if err := s.createTagTable(); err != nil {
 		return err
 	}
 

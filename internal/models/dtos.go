@@ -38,3 +38,9 @@ type CreatePersonDto struct {
 	Name   string `json:"name" validate:"required"`
 	Avatar string `json:"avatar"`
 }
+
+type CreateTagDto struct {
+	Title        string `json:"title" validate:"required"`
+	IsForNote    bool   `json:"isForNote"`
+	IsForMeeting bool   `json:"isForMeeting"`
+}
