@@ -14,6 +14,7 @@ type PostgresStore struct {
 	UserRepo   models.UserRepository
 	PersonRepo models.PersonRepository
 	TagRepo    models.TagRepository
+	NoteRepo   models.NoteRepository
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
@@ -36,16 +37,24 @@ func NewPostgresStore() (*PostgresStore, error) {
 	userRepo := NewUserRepo(db)
 	PersonRepo := NewPersonRepo(db)
 	tagRepo := NewTagRepo(db)
+	noteRepo := NewNoteRepo(db)
 
 	return &PostgresStore{
 		db:         db,
 		UserRepo:   userRepo,
 		PersonRepo: PersonRepo,
 		TagRepo:    tagRepo,
+		NoteRepo:   noteRepo,
 	}, nil
 }
 
+func (s *PostgresStore) CreateTypes() {
+	s.db.Query(`CREATE TYPE valid_note_types AS ENUM ('person', 'meeting');`)
+}
+
 func (s *PostgresStore) Init() error {
+
+	s.CreateTypes()
 
 	if err := s.createUserTable(); err != nil {
 		return err
@@ -56,6 +65,14 @@ func (s *PostgresStore) Init() error {
 	}
 
 	if err := s.createTagTable(); err != nil {
+		return err
+	}
+
+	if err := s.createNoteTable(); err != nil {
+		return err
+	}
+
+	if err := s.createNoteTagTable(); err != nil {
 		return err
 	}
 

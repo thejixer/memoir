@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/thejixer/memoir/internal/models"
@@ -123,6 +124,37 @@ func (r *TagRepo) QueryMeetingTags(text string, userId, page, limit int) ([]*mod
 	`, str, userId).Scan(&count)
 
 	return tags, count, nil
+}
+
+func (r *TagRepo) GetTagsById(tagIds []int) ([]*models.Tag, error) {
+	// Create a placeholder string for the IN clause
+	placeholders := make([]string, len(tagIds))
+	args := make([]interface{}, len(tagIds))
+
+	for i, id := range tagIds {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`SELECT * FROM tags WHERE id IN (%s)`, strings.Join(placeholders, ","))
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []*models.Tag
+	for rows.Next() {
+		tag, err := ScanIntoTags(rows)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+
 }
 
 func ScanIntoTags(rows *sql.Rows) (*models.Tag, error) {

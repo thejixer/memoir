@@ -8,4 +8,6 @@ func (s *APIServer) ApplyRoutes(e *echo.Echo) {
 	s.ApplyAuthRoutes(e)
 	s.ApplyPersonRoutes(e)
 	s.ApplyTagRoutes(e)
+	s.ApplyNoteRoutes(e)
+
 }

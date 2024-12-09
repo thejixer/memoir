@@ -44,3 +44,10 @@ type CreateTagDto struct {
 	IsForNote    bool   `json:"isForNote"`
 	IsForMeeting bool   `json:"isForMeeting"`
 }
+
+type CreateNoteDto struct {
+	Title    string `json:"title" validate:"required"`
+	Content  string `json:"content" validate:"required"`
+	TargetId int    `json:"targetId" validate:"required"`
+	TagIds   []int  `json:"tagIds" validate:"required"`
+}
