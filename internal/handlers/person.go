@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -85,7 +84,6 @@ func (h *HandlerService) HandleGetSinglePerson(c echo.Context) error {
 	}
 	person, err := h.dbStore.PersonRepo.FindById(personId)
 	if err != nil {
-		fmt.Println(err)
 		msg := err.Error()
 		if msg == "not found" {
 			return WriteReponse(c, http.StatusNotFound, "not found")

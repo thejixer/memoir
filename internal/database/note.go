@@ -95,3 +95,48 @@ func (r *NoteRepo) CreatePersonNote(title, content string, personId, userId int,
 	return newNote, nil
 
 }
+
+func (r *NoteRepo) GetNotesByPersonId(persondId, userId, page, limit int) ([]*models.NoteDto, int, error) {
+	offset := page * limit
+	query := `
+		SELECT id, title, content, createdAt FROM notes 
+		WHERE personId = $1 AND userId = $2
+		ORDER BY id desc
+		OFFSET $3 ROWS
+		FETCH NEXT $4 ROWS ONLY
+	`
+	rows, err := r.db.Query(query, persondId, userId, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var notes []*models.NoteDto
+	for rows.Next() {
+		note, err := ScanIntoNoteDto(rows)
+		if err != nil {
+			return nil, 0, err
+		}
+		notes = append(notes, note)
+	}
+	var count int
+	r.db.QueryRow(`
+		SELECT count(id) 
+		FROM notes
+		WHERE personId = $1 AND userId = $2
+	`, persondId, userId).Scan(&count)
+
+	return notes, count, nil
+}
+
+func ScanIntoNoteDto(rows *sql.Rows) (*models.NoteDto, error) {
+	u := new(models.NoteDto)
+	if err := rows.Scan(
+		&u.ID,
+		&u.Title,
+		&u.Content,
+		&u.CreatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return u, nil
+}

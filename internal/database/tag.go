@@ -157,6 +157,30 @@ func (r *TagRepo) GetTagsById(tagIds []int) ([]*models.Tag, error) {
 
 }
 
+func (r *TagRepo) FetchTagsForNote(noteID int, ch chan<- []models.TagDto) {
+	query := `
+		SELECT t.id, t.title 
+		FROM tags t
+		INNER JOIN note_tags nt ON t.id = nt.tag_id
+		WHERE nt.note_id = $1`
+	rows, err := r.db.Query(query, noteID)
+	if err != nil {
+		ch <- nil
+		return
+	}
+	defer rows.Close()
+	var tags []models.TagDto
+	for rows.Next() {
+		tag := new(models.TagDto)
+		if err := rows.Scan(&tag.ID, &tag.Title); err != nil {
+			ch <- nil
+			return
+		}
+		tags = append(tags, *tag)
+	}
+	ch <- tags
+}
+
 func ScanIntoTags(rows *sql.Rows) (*models.Tag, error) {
 	u := new(models.Tag)
 	if err := rows.Scan(

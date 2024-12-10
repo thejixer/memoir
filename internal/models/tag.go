@@ -5,6 +5,7 @@ type TagRepository interface {
 	QueryNoteTags(text string, userId, page, limit int) ([]*Tag, int, error)
 	QueryMeetingTags(text string, userId, page, limit int) ([]*Tag, int, error)
 	GetTagsById(tagIds []int) ([]*Tag, error)
+	FetchTagsForNote(noteID int, ch chan<- []TagDto)
 }
 
 type Tag struct {
