@@ -23,7 +23,6 @@ func (s *PostgresStore) createNoteTagTable() error {
 
 func (s *PostgresStore) createNoteTable() error {
 
-	// 			meetingId INTEGER REFERENCES meeting (id),
 	query := `
 		CREATE TABLE IF NOT EXISTS notes (
 			id SERIAL PRIMARY KEY,
@@ -31,6 +30,7 @@ func (s *PostgresStore) createNoteTable() error {
 			content TEXT,
 			type valid_note_types,
 			personId INTEGER REFERENCES persons (id),
+			meetingId INTEGER REFERENCES meetings (id),
 			userId INTEGER REFERENCES users (id),
 			createdAt TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 		);`

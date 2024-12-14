@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -109,6 +110,36 @@ func (r *PersonRepo) FindById(id int) (*models.Person, error) {
 	}
 
 	return nil, errors.New("not found")
+}
+
+func (r *PersonRepo) GetPersonsByIds(personIds []int) ([]*models.Person, error) {
+
+	placeholders := make([]string, len(personIds))
+	args := make([]interface{}, len(personIds))
+
+	for i, id := range personIds {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`SELECT * FROM persons WHERE id IN (%s)`, strings.Join(placeholders, ","))
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	persons := []*models.Person{}
+	for rows.Next() {
+		u, err := ScanIntoPersons(rows)
+		if err != nil {
+			return nil, err
+		}
+		persons = append(persons, u)
+	}
+
+	return persons, nil
 }
 
 func ScanIntoPersons(rows *sql.Rows) (*models.Person, error) {

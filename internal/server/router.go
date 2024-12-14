@@ -9,5 +9,5 @@ func (s *APIServer) ApplyRoutes(e *echo.Echo) {
 	s.ApplyPersonRoutes(e)
 	s.ApplyTagRoutes(e)
 	s.ApplyNoteRoutes(e)
-
+	s.ApplyMeetingRoutes(e)
 }

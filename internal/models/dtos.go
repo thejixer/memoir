@@ -51,3 +51,8 @@ type CreateNoteDto struct {
 	TargetId int    `json:"targetId" validate:"required"`
 	TagIds   []int  `json:"tagIds" validate:"required"`
 }
+
+type CreateMeetingDto struct {
+	Title     string `json:"title" validate:"required"`
+	PersonIds []int  `json:"personIds" validate:"required"`
+}

@@ -10,11 +10,12 @@ import (
 )
 
 type PostgresStore struct {
-	db         *sql.DB
-	UserRepo   models.UserRepository
-	PersonRepo models.PersonRepository
-	TagRepo    models.TagRepository
-	NoteRepo   models.NoteRepository
+	db          *sql.DB
+	UserRepo    models.UserRepository
+	PersonRepo  models.PersonRepository
+	TagRepo     models.TagRepository
+	NoteRepo    models.NoteRepository
+	MeetingRepo models.MeetingRepository
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
@@ -38,13 +39,15 @@ func NewPostgresStore() (*PostgresStore, error) {
 	PersonRepo := NewPersonRepo(db)
 	tagRepo := NewTagRepo(db)
 	noteRepo := NewNoteRepo(db)
+	meetingRepo := NewMeetingRepo(db)
 
 	return &PostgresStore{
-		db:         db,
-		UserRepo:   userRepo,
-		PersonRepo: PersonRepo,
-		TagRepo:    tagRepo,
-		NoteRepo:   noteRepo,
+		db:          db,
+		UserRepo:    userRepo,
+		PersonRepo:  PersonRepo,
+		TagRepo:     tagRepo,
+		NoteRepo:    noteRepo,
+		MeetingRepo: meetingRepo,
 	}, nil
 }
 
@@ -68,11 +71,19 @@ func (s *PostgresStore) Init() error {
 		return err
 	}
 
+	if err := s.createMeetingTable(); err != nil {
+		return err
+	}
+
 	if err := s.createNoteTable(); err != nil {
 		return err
 	}
 
 	if err := s.createNoteTagTable(); err != nil {
+		return err
+	}
+
+	if err := s.createAttendanceTable(); err != nil {
 		return err
 	}
 
