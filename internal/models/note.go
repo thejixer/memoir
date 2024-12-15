@@ -6,6 +6,7 @@ type NoteRepository interface {
 	CreatePersonNote(title, content string, personId, userId int, tagIds []int) (*Note, error)
 	GetNotesByPersonId(persondId, userId, page, limit int) ([]*NoteDto, int, error)
 	CreateMeetingNote(title, content string, meetingId, userId int, tagIds []int) (*Note, error)
+	GetNotesByMeetingId(meetingId, userId, page, limit int) ([]*NoteDto, int, error)
 }
 
 type Note struct {

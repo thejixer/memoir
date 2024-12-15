@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -136,12 +135,10 @@ func (h *HandlerService) HandleCreateMeetingNote(c echo.Context) error {
 	body := models.CreateNoteDto{}
 
 	if err := c.Bind(&body); err != nil {
-		fmt.Println("xzfdsdf")
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if err := c.Validate(body); err != nil {
-		fmt.Println(err)
 		return WriteReponse(c, http.StatusBadRequest, "bad input")
 	}
 
@@ -151,7 +148,6 @@ func (h *HandlerService) HandleCreateMeetingNote(c echo.Context) error {
 
 	theseTags, err := h.dbStore.TagRepo.GetTagsById(body.TagIds)
 	if err != nil {
-		fmt.Println(err)
 		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
 	}
 	for _, item := range theseTags {
@@ -177,4 +173,72 @@ func (h *HandlerService) HandleCreateMeetingNote(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToNoteDto(note, tags))
 
+}
+
+func (h *HandlerService) HandleGetNotesByMeetingId(c echo.Context) error {
+	me, err := GetMe(&c)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "unathorized")
+	}
+
+	i := c.Param("meetingId")
+	p := c.QueryParam("page")
+	l := c.QueryParam("limit")
+
+	var page int
+	var limit int
+
+	page, err = strconv.Atoi(p)
+	if err != nil {
+		page = 0
+	}
+	limit, err = strconv.Atoi(l)
+	if err != nil {
+		limit = 10
+	}
+	meetingId, err := strconv.Atoi(i)
+	if err != nil {
+		return WriteReponse(c, http.StatusBadRequest, "bad input")
+	}
+
+	thisMeeting, err := h.dbStore.MeetingRepo.FindById(meetingId)
+	if err != nil {
+		msg := err.Error()
+		if msg == "not found" {
+			return WriteReponse(c, http.StatusNotFound, "not found")
+		}
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+
+	}
+	if thisMeeting.UserId != me.ID {
+		return WriteReponse(c, http.StatusForbidden, "forbidden")
+	}
+
+	theseNotes, count, err := h.dbStore.NoteRepo.GetNotesByMeetingId(meetingId, me.ID, page, limit)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+
+	var wg sync.WaitGroup
+	ch := make(chan []models.TagDto, len(theseNotes))
+	for i := range theseNotes {
+		wg.Add(1)
+		go func(noteID int, idx int) {
+			defer wg.Done()
+			h.dbStore.TagRepo.FetchTagsForNote(noteID, ch)
+		}(theseNotes[i].ID, i)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for i := 0; i < len(theseNotes); i++ {
+		tags := <-ch
+		theseNotes[i].Tags = tags
+	}
+
+	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToLLNoteDto(theseNotes, count))
 }
