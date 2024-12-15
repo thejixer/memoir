@@ -61,6 +61,7 @@ func (r *NoteRepo) CreatePersonNote(title, content string, personId, userId int,
 		Title:     title,
 		Content:   content,
 		PersonId:  personId,
+		MeetingId: 0,
 		UserId:    userId,
 		CreatedAt: time.Now().UTC(),
 	}
@@ -126,6 +127,53 @@ func (r *NoteRepo) GetNotesByPersonId(persondId, userId, page, limit int) ([]*mo
 	`, persondId, userId).Scan(&count)
 
 	return notes, count, nil
+}
+
+func (r *NoteRepo) CreateMeetingNote(title, content string, meetingId, userId int, tagIds []int) (*models.Note, error) {
+	// not completed
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	newNote := &models.Note{
+		ID:        0,
+		Title:     title,
+		Content:   content,
+		PersonId:  0,
+		MeetingId: meetingId,
+		UserId:    userId,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	var noteID int
+	err = tx.QueryRow(`
+		INSERT INTO notes (title, content, type, meetingId, userId) 
+		VALUES ($1, $2, 'meeting', $3, $4) RETURNING id`,
+		title, content, meetingId, userId,
+	).Scan(&noteID)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	newNote.ID = noteID
+	for _, tagID := range tagIds {
+		_, err := tx.Exec(`
+			INSERT INTO note_tags (note_id, tag_id) 
+			VALUES ($1, $2)`,
+			noteID, tagID,
+		)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return newNote, nil
+
 }
 
 func ScanIntoNoteDto(rows *sql.Rows) (*models.NoteDto, error) {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -10,7 +11,7 @@ import (
 	"github.com/thejixer/memoir/internal/models"
 )
 
-func (h *HandlerService) HandleCreateNote(c echo.Context) error {
+func (h *HandlerService) HandleCreatePersonNote(c echo.Context) error {
 	me, err := GetMe(&c)
 
 	if err != nil {
@@ -114,5 +115,58 @@ func (h *HandlerService) HandleGetNotesByPersonId(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToLLNoteDto(theseNotes, count))
+
+}
+
+func (h *HandlerService) HandleCreateMeetingNote(c echo.Context) error {
+	me, err := GetMe(&c)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "unathorized")
+	}
+
+	body := models.CreateNoteDto{}
+
+	if err := c.Bind(&body); err != nil {
+		fmt.Println("xzfdsdf")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(body); err != nil {
+		fmt.Println(err)
+		return WriteReponse(c, http.StatusBadRequest, "bad input")
+	}
+
+	if len(body.TagIds) == 0 {
+		return WriteReponse(c, http.StatusBadRequest, "you need to provide tags")
+	}
+
+	theseTags, err := h.dbStore.TagRepo.GetTagsById(body.TagIds)
+	if err != nil {
+		fmt.Println(err)
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+	for _, item := range theseTags {
+		if item.UserId != me.ID || !item.IsForMeeting {
+			return WriteReponse(c, http.StatusBadRequest, "bad input")
+		}
+	}
+
+	thisMeeting, err := h.dbStore.MeetingRepo.FindById(body.TargetId)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+	if thisMeeting.UserId != me.ID {
+		return WriteReponse(c, http.StatusForbidden, "forbidden")
+	}
+
+	note, err := h.dbStore.NoteRepo.CreateMeetingNote(body.Title, body.Content, body.TargetId, me.ID, body.TagIds)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+
+	tags := dataprocesslayer.ConvertToTagDtoArray(theseTags)
+
+	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToNoteDto(note, tags))
 
 }

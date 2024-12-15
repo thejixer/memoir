@@ -5,6 +5,7 @@ import "time"
 type NoteRepository interface {
 	CreatePersonNote(title, content string, personId, userId int, tagIds []int) (*Note, error)
 	GetNotesByPersonId(persondId, userId, page, limit int) ([]*NoteDto, int, error)
+	CreateMeetingNote(title, content string, meetingId, userId int, tagIds []int) (*Note, error)
 }
 
 type Note struct {
@@ -12,6 +13,7 @@ type Note struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	PersonId  int       `json:"personId"`
+	MeetingId int       `json:"meetingId"`
 	UserId    int       `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
 }

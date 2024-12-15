@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/thejixer/memoir/internal/models"
@@ -88,4 +89,29 @@ func (r *MeetingRepo) Create(title string, userId int, personsIds []int) (*model
 
 	return newMeeting, nil
 
+}
+
+func (r *MeetingRepo) FindById(id int) (*models.Meeting, error) {
+	rows, err := r.db.Query("SELECT * FROM meetings WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return ScanIntoMeetings(rows)
+	}
+
+	return nil, errors.New("not found")
+}
+
+func ScanIntoMeetings(rows *sql.Rows) (*models.Meeting, error) {
+	u := new(models.Meeting)
+	if err := rows.Scan(
+		&u.ID,
+		&u.Title,
+		&u.UserId,
+		&u.CreatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return u, nil
 }
