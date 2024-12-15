@@ -15,8 +15,7 @@ type Meeting struct {
 }
 
 type MeetingDto struct {
-	ID        int         `json:"id"`
-	Title     string      `json:"title"`
-	Persons   []PersonDto `json:"persons"`
-	CreatedAt time.Time   `json:"createdAt"`
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	CreatedAt time.Time `json:"createdAt"`
 }

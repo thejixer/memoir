@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -27,7 +26,6 @@ func (h *HandlerService) HandleCreateMeeting(c echo.Context) error {
 
 	thesePersons, err := h.dbStore.PersonRepo.GetPersonsByIds(body.PersonIds)
 	if err != nil {
-		fmt.Println("err here : ", err)
 		return WriteReponse(c, http.StatusInternalServerError, "this is on us, please try again")
 	}
 
@@ -39,8 +37,6 @@ func (h *HandlerService) HandleCreateMeeting(c echo.Context) error {
 
 	thisMeeting, err := h.dbStore.MeetingRepo.Create(body.Title, me.ID, body.PersonIds)
 	if err != nil {
-		fmt.Println("1")
-		fmt.Println("err here : ", err)
 		return WriteReponse(c, http.StatusInternalServerError, "this is on us, please try again")
 	}
 

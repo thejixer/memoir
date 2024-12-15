@@ -142,6 +142,31 @@ func (r *PersonRepo) GetPersonsByIds(personIds []int) ([]*models.Person, error) 
 	return persons, nil
 }
 
+func (r *PersonRepo) GetPersonsByMeetingId(meetingId int) ([]*models.Person, error) {
+	query := `
+		SELECT p.id AS person_id, p.name, p.avatar, p.userId, p.createdAt
+		FROM attendance a
+		INNER JOIN persons p
+		ON a.person_id = p.id
+		WHERE a.meeting_id = $1;
+	`
+
+	rows, err := r.db.Query(query, meetingId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	persons := []*models.Person{}
+	for rows.Next() {
+		u, err := ScanIntoPersons(rows)
+		if err != nil {
+			return nil, err
+		}
+		persons = append(persons, u)
+	}
+	return persons, nil
+}
+
 func ScanIntoPersons(rows *sql.Rows) (*models.Person, error) {
 	u := new(models.Person)
 	if err := rows.Scan(

@@ -97,3 +97,35 @@ func (h *HandlerService) HandleGetSinglePerson(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToPersonDto(person))
 }
+
+func (h *HandlerService) HandleGetPersonsByMeetingId(c echo.Context) error {
+	me, err := GetMe(&c)
+
+	if err != nil {
+		return WriteReponse(c, http.StatusUnauthorized, "unathorized")
+	}
+
+	id := c.Param("meetingId")
+	meetingId, err := strconv.Atoi(id)
+	if err != nil {
+		return WriteReponse(c, http.StatusNotFound, "not found")
+	}
+
+	thisMeeting, err := h.dbStore.MeetingRepo.FindById(meetingId)
+	if err != nil {
+		msg := err.Error()
+		if msg == "not found" {
+			return WriteReponse(c, http.StatusNotFound, "not found")
+		}
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+	if thisMeeting.UserId != me.ID {
+		return WriteReponse(c, http.StatusForbidden, "forbidden")
+	}
+
+	persons, err := h.dbStore.PersonRepo.GetPersonsByMeetingId(thisMeeting.ID)
+	if err != nil {
+		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+	}
+	return c.JSON(http.StatusOK, dataprocesslayer.ConvertToPersonDtoArray(persons))
+}

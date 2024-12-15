@@ -7,6 +7,7 @@ type PersonRepository interface {
 	QueryMyPersons(text string, userId, page, limit int) ([]*Person, int, error)
 	FindById(id int) (*Person, error)
 	GetPersonsByIds(personIds []int) ([]*Person, error)
+	GetPersonsByMeetingId(meetingId int) ([]*Person, error)
 }
 
 type Person struct {

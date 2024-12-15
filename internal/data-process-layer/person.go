@@ -12,6 +12,16 @@ func ConvertToPersonDto(u *models.Person) models.PersonDto {
 	}
 }
 
+func ConvertToPersonDtoArray(a []*models.Person) []models.PersonDto {
+	p := make([]models.PersonDto, 0)
+
+	for _, s := range a {
+		p = append(p, ConvertToPersonDto(s))
+	}
+
+	return p
+}
+
 func ConvertToLLPersonDto(a []*models.Person, count int) models.LL_PersonDto {
 
 	users := make([]models.PersonDto, 0)
