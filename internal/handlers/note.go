@@ -38,6 +38,14 @@ func (h *HandlerService) HandleCreatePersonNote(c echo.Context) error {
 		}
 	}
 
+	thisPerson, err := h.dbStore.PersonRepo.FindById(body.TargetId)
+	if err != nil {
+		return WriteReponse(c, http.StatusBadRequest, "bad input")
+	}
+	if thisPerson.UserId != me.ID {
+		return WriteReponse(c, http.StatusForbidden, "forbidden")
+	}
+
 	note, err := h.dbStore.NoteRepo.CreatePersonNote(body.Title, body.Content, body.TargetId, me.ID, body.TagIds)
 	if err != nil {
 		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
@@ -154,7 +162,7 @@ func (h *HandlerService) HandleCreateMeetingNote(c echo.Context) error {
 
 	thisMeeting, err := h.dbStore.MeetingRepo.FindById(body.TargetId)
 	if err != nil {
-		return WriteReponse(c, http.StatusInternalServerError, "this one's on us")
+		return WriteReponse(c, http.StatusBadRequest, "bad input")
 	}
 	if thisMeeting.UserId != me.ID {
 		return WriteReponse(c, http.StatusForbidden, "forbidden")
